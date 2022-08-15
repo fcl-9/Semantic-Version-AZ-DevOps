@@ -1,0 +1,68 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- main
+
+pool:  
+  name: local 
+
+variables:
+  - name: GitVersion
+  - name: Semver
+
+steps:
+- task: PowerShell@2
+  displayName: 'Generate Semantic Version'     
+  inputs:
+    targetType: 'inline'
+    script: |
+      $GitVersion = dotnet-gitversion -config .\gitversion.yaml | ConvertFrom-Json 
+      Write-Host "##vso[task.setvariable variable=GitVersion;]"$GitVersion
+      Write-Host "##vso[task.setvariable variable=SemVer;]"$GitVersion.Semver
+   
+- task: PowerShell@2
+  displayName: 'Print SemanticVersion'     
+  inputs:
+    targetType: 'inline'
+    script: 'Write-Host "Current version is" $(Semver)'
+
+- task: PowerShell@2
+  displayName: 'Update Build Number with Semantic Version'     
+  inputs:
+    targetType: 'inline'
+    script: |
+      'Write-Host "Current version is" $(Semver)'
+      Write-Host "##vso[build.updatebuildnumber]"$(Semver)
+   
+- task: PowerShell@2
+  displayName: 'Print Updated Build Number'     
+  inputs:
+    targetType: 'inline'
+    script: 'Write-Host $(Build.BuildNumber)'
+
+
+# - task: Bash@3
+#   inputs:
+#     targetType: inline
+#     script: echo "##vso[build.updatebuildnumber]$(SemVer)"
+#   displayName: 'Update build number'
+ 
+  # - task: gitversion/execute@0
+  #   inputs:
+  #     useConfigFile: true
+  #     configFilePath: './GitVersion.yml'
+  # - script: echo current version is $(GitVersion.SemVer)
+  #   displayName: 'Display calculated version'      
+  # - task: Bash@3
+  #   inputs:
+  #     targetType: inline
+  #     script: echo "##vso[build.updatebuildnumber]$(SemVer)"
+  #   displayName: 'Update build number'
+
+# - script: |
+#     echo Add other tasks to build, test, and deploy your project.
+#     echo See https://aka.ms/yaml
+#   displayName: 'Run a multi-line script'
